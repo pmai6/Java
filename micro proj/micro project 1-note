@@ -1,0 +1,73 @@
+1) HOMEWORK 
+The idea of question 1A of part 2 is that you come up with your own calling convention. If you want, you can use the calling convention provided to you, and answer based on that.
+ 
+We are talking about a general case. So, if someone was to add to your code, they can just follow the convention you define, and ensure that they don't accidentally overwrite an important register such as the return value register.
+
+* Okay, so I'm assuming your instruction looks sort of like this:
+ 
+beq $a0, $a1, zero_case
+ 
+So, what's happening is the compiler is actually replacing zero_case with a 5-bit signed offset value indicating how far the zero_case labeled block of code is from the current PC (PC + 1, technically speaking).  Now, recall that a 5-bit value can only represent 32 values, and in this case, it would represent the values in the range [-16, 15].  Here's your issue: the zero_case block of code is probably more than either 15 lines down or 16 lines up from where your beq instruction is.
+ 
+The only solution would be to restructure your code, such that the beq and the zero_case block of code are closer together.  My suggestion would be to make a separate block of code to handle all the branching logic.
+ 
+ * Think about what LEA accomplishes and what combination of lw and/or sw you could use to get the same information
+
+ * I would try lw.  $sp holds the memory address containing the value 0x4000.  So you can load 0x4000 into a register by using lw
+
+ *  local variable
+	old frame pointer
+	Return address
+	Return value
+	S-Register (to hold result)
+	T-Registers (just in case needed)
+
+As long as you properly specify in the written portion what calling convention you're using and how your stack frame is set up (and then adhere to that) it should be fine.
+
+* The frame pointer allows you  to locate all of the  items that are stored on the stack by a program.  Granted this same task can be accomplished by using some offset from the stack pointer. However, this can get somewhat tiresome. Lets say you push a variable unto the stack and you need access to that variable at some later point during the functions execution. Between that variables allocation and its use you may have pushed additional elements unto the stack. When you go back to retrieve that variable you'll have to recalculate its offset from the stack based on the stacks current location. By using a frame pointer you effectively have a fixed point of reference within the activation record so no recalculation is necessary.
+For this particular assignment the frame pointer may not be necessary. You can simply do the additional bookkeeping needed to keep track of the stacks movement and calculate offsets. I used a frame pointer and it made it much easier to reason about the transition between caller and callee and it also made debugging much easier
+
+* When we load the address of a label using la, we only get the address of the label inside the register. We need to use lw to get the value at that address (Which is 0x4000 in this case)
+
+* stack:	    .word 0x4000				! the stack begins here
+ 
+ 
+The la instruction in main actually loads the address of memory at stack.  So after the first line of main, $sp would be something like 0x14 (the address of stack).  However, you need to load the value of memory at stack, which is 0x4000, hence:
+! FIXME: load desired value of the stack
+
+* what are we supposed to do with the finals answer? Can we just leave it in the return value register?
+
+	YES.
+* No user's input
+
+* yes jalr will allow you to jump into the fibonacci subroutine.  If you use
+ 
+jalr $at, $ra
+you will jump to the address stored in $at, which is the fibonacci label, and the address of the next instruction following this jalr instruction will get stored in $ra.  For example in main, the next instruction following jalr is halt, so the address of the halt instruction will get stored into $ra.  Because of this, the contents of $at will not equal the contents of $ra, and you will be able to initiate your recursive call using jalr.
+
+* To return to the caller:
+
+jalr $ra, $zero
+
+* Make constant label
+
+It is always going to be easier to just add it every time. If you want to load a one, you can just go:
+addi $t0, $zero, 1 ! place a one into $t0
+So now $t0 is loaded with a one.
+ 
+If you really wanted to do it another way, you could set up a one in memory somewhere:
+myOne: .word 0x1 ! doesn't matter where this is put
+When you want the one in a register, you will have to load its address and then access it:
+ 
+la $t0, myOne ! load the address of the label myOne into $t0
+lw $t1, ($t0) ! load the value at address $t0, which is myOne's location
+
+
+
+2) SIMULATOR 
+Yes that is the simulator. There unfortunately isn't a tool for LC-2200 like what you used last year in 2110.
+ 
+However, you can still step through your assembly code (using "s") and view all register values using the simulator.
+
+3) READING QUIZES 
+most reading quizzes will be due on Mondays, most reading quizzes will be posted earlier.  This one came late in the week in part because it's not due until Wednesday.
